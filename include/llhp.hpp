@@ -1,6 +1,6 @@
 #ifndef libLLHP_h
 #define libLLHP_h
-##include <objc/runtime.h>
+#include <objc/runtime.h>
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
 #include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/IR/Module.h"
@@ -16,9 +16,12 @@ class LLHP
 {
 public:
     ~LLHP();
-    LLHP(char* IRPath);
+    LLHP();
+    LLHP(char* Path);
     ExecutionEngine* EE;
-    static LLHP* instance;
+    static LLHP* singleton;
+    map<string,Function*> table;//HashMap caching (CLASS+SEL):Function* for fast query, used by dummySELHandler
+
 };
 
 #endif
