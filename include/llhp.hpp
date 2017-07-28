@@ -10,6 +10,12 @@
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/ExecutionEngine/GenericValue.h"
 #include "llvm-c/Core.h"
+#include "llvm/IR/Constants.h"
+#include "llvm/IR/IRBuilder.h"
+#include "llvm/IR/Instructions.h"
+#include "llvm/IR/LegacyPassManager.h"
+#include "llvm/IR/TypeBuilder.h"
+#include "llvm/IR/Value.h"
 using namespace llvm;
 using namespace std;
 class LLHP
@@ -17,10 +23,12 @@ class LLHP
 public:
     ~LLHP();
     LLHP();
-    LLHP(char* Path);
+    void apply();
+    void addModule(Module* M);
     ExecutionEngine* EE;
+protected:
     static LLHP* singleton;
-    map<string,Function*> table;//HashMap caching (CLASS+SEL):Function* for fast query, used by dummySELHandler
+    map<string,tuple<string /*Method Signature*/,Function * /*IMP*/>> cachetable;//HashMap caching (CLASS+SEL):Function* for fast query, used by dummySELHandler
 
 };
 
