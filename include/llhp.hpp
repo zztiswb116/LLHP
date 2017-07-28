@@ -2,8 +2,8 @@
 #define libLLHP_h
 #include <objc/runtime.h>
 #include "llvm/ExecutionEngine/ExecutionEngine.h"
-#include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/IR/Module.h"
+#include "llvm/ExecutionEngine/Interpreter.h"
 #include "llvm/IRReader/IRReader.h"
 #include "llvm/IR/LLVMContext.h"
 #include "llvm/Support/SourceMgr.h"
@@ -23,13 +23,11 @@ class LLHP
 {
 public:
     ~LLHP();
-    LLHP();
-    void apply();
-    void addModule(Module* M);
+    LLHP(char* Path);
     ExecutionEngine* EE;
-protected:
     static LLHP* singleton;
     map<string,tuple<string /*Method Signature*/,Function * /*IMP*/>> cachetable;//HashMap caching (CLASS+SEL):Function* for fast query, used by dummySELHandler
+    std::string err;
 
 };
 

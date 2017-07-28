@@ -22,7 +22,7 @@ add_library(LLHP ${LLHP_SRC})
 
 # Find the libraries that correspond to the LLVM components
 # that we wish to use
-llvm_map_components_to_libnames(llvm_libs support core irreader)
+llvm_map_components_to_libnames(llvm_libs support core irreader executionengine)
 
 # Link against LLVM libraries
 include_directories(include/)
