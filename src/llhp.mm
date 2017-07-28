@@ -9,6 +9,10 @@ static void* dummySELHandler(id self,SEL _cmd,...){
         Method meth=(class_getInstanceMethod([self class],_cmd)!=NULL) ? class_getInstanceMethod([self class],_cmd) : class_getClassMethod([self class],_cmd);
         va_list ap;
         va_start(ap,_cmd);
+        for(unsigned int i=2;i<method_getNumberOfArguments(meth);i++){//0 and 1 is self and SEL
+          char type[OBJC_ARGUMENT_TYPE_STR_MAX_LENGTH] = {};
+          method_getArgumentType(meth,i,type,OBJC_ARGUMENT_TYPE_STR_MAX_LENGTH);
+        }
 
 }
 LLHP::LLHP(){

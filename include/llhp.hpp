@@ -16,6 +16,7 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/IR/TypeBuilder.h"
 #include "llvm/IR/Value.h"
+#define OBJC_ARGUMENT_TYPE_STR_MAX_LENGTH 64
 using namespace llvm;
 using namespace std;
 class LLHP
