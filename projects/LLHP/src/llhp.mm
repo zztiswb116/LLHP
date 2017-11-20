@@ -13,14 +13,14 @@ static void* dummySELHandler(id self,SEL _cmd,...){
     vector<GenericValue> args;
     va_list ap;
     va_start(ap,_cmd);
-    
+
     GenericValue arg1;//Push in self
     arg1.PointerVal=(__bridge void*)self;
     args.push_back(arg1);
     GenericValue arg2;//Push in SEL
     arg2.PointerVal=_cmd;
     args.push_back(arg2);
-    
+
     for(unsigned int i=2;i<method_getNumberOfArguments(meth);i++){
         char type[OBJC_ARGUMENT_TYPE_STR_MAX_LENGTH] = {};
         method_getArgumentType(meth,i,type,OBJC_ARGUMENT_TYPE_STR_MAX_LENGTH);
@@ -47,8 +47,7 @@ LLHP::LLHP(){
     InitializeNativeTarget();
     LLVMContext c;
     Module Mo(StringRef("LLHP"),c);
-    //unique_ptr<Module> Mo=make_unique<Module>(StringRef("LLHP"),c);
-    EngineBuilder Engine(std::make_unique<Module>(StringRef("LLHP"),c));
+    EngineBuilder Engine(make_unique<Module>(StringRef("LLHP"),c));
     Engine.setEngineKind(EngineKind::Interpreter);
     Engine.setErrorStr(&err);
     EE=Engine.create();
@@ -73,7 +72,7 @@ void LLHP::LoadModule(unique_ptr< Module > Mo){
                 }
             }
         }
-        
+
     }
     for(string className:ClassNameList) {
         string ClassMethodListGVName = "\01l_OBJC_$_CLASS_METHODS_";
@@ -116,7 +115,7 @@ void LLHP::LoadModule(unique_ptr< Module > Mo){
                 method_setImplementation(class_getClassMethod(objc_getClass(className.c_str()),sel_registerName(MethodName.str().c_str())),(IMP)dummySELHandler);
                 //ClassMethodList.push_back(
                 //make_tuple(MethodName.str(), MethodSig.str(), IMP));
-                
+
             }
         }
         if (InstanceMethodListGV!=nullptr&&InstanceMethodListGV->hasInitializer()) {
@@ -165,26 +164,29 @@ void LLHP::LoadModule(unique_ptr< Module > Mo){
                 if(GlobalVariable* foo1= dyn_cast<GlobalVariable>(exp->getOperand (0))){
                     StringRef SELName=dyn_cast<ConstantDataArray>(foo1->getInitializer())->getAsCString();
                     void* SELFoo=(void*)sel_registerName(SELName.data());
-                    EE->addGlobalMapping(&GV,SELFoo);
+                    errs()<<SELName<<" :"<<SELFoo<<"\n";
+                    EE->addGlobalMapping(&GV,&SELFoo);
                 }
             }
-            
+
         }
         else if(!GV.hasInitializer ()){
             //Declared Variable
             if(GVName.startswith("OBJC_CLASS_$_")){
                 size_t pos=GVName.find("OBJC_CLASS_$_");
                 StringRef clsName=GVName.substr(pos+strlen("OBJC_CLASS_$_"));
-                EE->addGlobalMapping(&GV, (__bridge void*)objc_getClass(clsName.data()));
-                
+                void* tmp=(__bridge void*)objc_getClass(clsName.data());
+                errs()<<clsName<<" :"<<tmp<<"\n";
+                EE->addGlobalMapping(&GV,tmp);
+
             }
             /*map<Type*,function<void *(GlobalVariable*)>>::iterator it = Handlers.find(GVType);
             if(it != Handlers.end())
             {
                 function<void *(GlobalVariable*)> Handler = it->second;
-                
+
             }*/
-            
+
         }
     }
     EE->addModule(std::move(Mo));

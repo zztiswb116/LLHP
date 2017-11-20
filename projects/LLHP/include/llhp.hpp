@@ -24,7 +24,7 @@ class LLHP
 public:
     ~LLHP();
     LLHP();
-    void LoadModule(unique_ptr< Module > Mo);
+    void LoadModule(unique_ptr<llvm::Module > Mo);
     ExecutionEngine* EE;
     static LLHP* singleton;
     map<Type*,function<void *(GlobalVariable*)>> Handlers;

@@ -196,14 +196,14 @@ static bool ffiInvoke(RawFunc Fn, Function *F, ArrayRef<GenericValue> ArgVals,
 
   // TODO: We don't have type information about the remaining arguments, because
   // this information is never passed into ExecutionEngine::runFunction().
-  /*if (ArgVals.size() > NumArgs && F->isVarArg()) {
+  if (ArgVals.size() > NumArgs && F->isVarArg()) {
     report_fatal_error("Calling external var arg function '" + F->getName()
                       + "' is not supported by the Interpreter.");
-  }*/
+  }
 
   unsigned ArgBytes = 0;
 
-  std::vector<ffi_type*> args(ArgVals.size());
+  std::vector<ffi_type*> args(NumArgs);
   for (Function::const_arg_iterator A = F->arg_begin(), E = F->arg_end();
        A != E; ++A) {
     const unsigned ArgNo = A->getArgNo();
@@ -211,19 +211,11 @@ static bool ffiInvoke(RawFunc Fn, Function *F, ArrayRef<GenericValue> ArgVals,
     args[ArgNo] = ffiTypeFor(ArgTy);
     ArgBytes += TD.getTypeStoreSize(ArgTy);
   }
-  if (ArgVals.size() > NumArgs && F->isVarArg()) {
-    Type *VarArgTy = FTy->getParamType(FTy->getNumParams()-1);//Get Last Type
-    for(size_t i=0;i<ArgVals.size()-NumArgs;i++){
-      //Start mapping the remaining arguments's Types
-      args[i+NumArgs] = ffiTypeFor(VarArgTy);
-      ArgBytes += TD.getTypeStoreSize(VarArgTy);
-    }
-  }
 
   SmallVector<uint8_t, 128> ArgData;
   ArgData.resize(ArgBytes);
   uint8_t *ArgDataPtr = ArgData.data();
-  SmallVector<void*, 16> values(ArgVals.size());
+  SmallVector<void*, 16> values(NumArgs);
   for (Function::const_arg_iterator A = F->arg_begin(), E = F->arg_end();
        A != E; ++A) {
     const unsigned ArgNo = A->getArgNo();
@@ -231,18 +223,11 @@ static bool ffiInvoke(RawFunc Fn, Function *F, ArrayRef<GenericValue> ArgVals,
     values[ArgNo] = ffiValueFor(ArgTy, ArgVals[ArgNo], ArgDataPtr);
     ArgDataPtr += TD.getTypeStoreSize(ArgTy);
   }
-  if (ArgVals.size() > NumArgs && F->isVarArg()) {
-    Type *VarArgTy = FTy->getParamType(FTy->getNumParams()-1);//Get Last Type
-    for(size_t i=0;i<ArgVals.size()-NumArgs;i++){
-      //Start mapping the remaining arguments's Values
-      values[i+NumArgs] = ffiValueFor(VarArgTy, ArgVals[i+NumArgs], ArgDataPtr);
-      ArgDataPtr += TD.getTypeStoreSize(VarArgTy);
-    }
-  }
 
   Type *RetTy = FTy->getReturnType();
   ffi_type *rtype = ffiTypeFor(RetTy);
-  if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, ArgVals.size(), rtype, &args[0]) == FFI_OK) {
+
+  if (ffi_prep_cif(&cif, FFI_DEFAULT_ABI, NumArgs, rtype, &args[0]) == FFI_OK) {
     SmallVector<uint8_t, 128> ret;
     if (RetTy->getTypeID() != Type::VoidTyID)
       ret.resize(TD.getTypeStoreSize(RetTy));
