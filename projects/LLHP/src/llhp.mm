@@ -1,7 +1,6 @@
 #include "llhp.hpp"
 #include <dispatch/dispatch.h>
 #include <iostream>
-#include <memory>
 LLHP* LLHP::singleton=nullptr;
 static void* dummySELHandler(id self,SEL _cmd,...){
     string cacheKey;//Key for caching hashmap
