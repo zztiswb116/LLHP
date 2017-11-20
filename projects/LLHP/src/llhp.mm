@@ -55,7 +55,7 @@ LLHP::LLHP(){
 }
 void LLHP::LoadModule(unique_ptr< Module > Mo){
     Module* M=Mo.get();
-    vector<string> ClassNameList;
+   /* vector<string> ClassNameList;
     //Collect MethodInfo and push into cache
     for (auto GVI = M->global_begin(); GVI != M->global_end();
          GVI++) {        // Iterate GVs for ClassList
@@ -149,22 +149,25 @@ void LLHP::LoadModule(unique_ptr< Module > Mo){
                 method_setImplementation(class_getInstanceMethod(objc_getClass(className.c_str()),sel_registerName(MethodName.str().c_str())),(IMP)dummySELHandler);
             }
         }
-    }
+    }*/
     //TODO: Map GVs to native address.
     //Including but not limited to StringConstants(a.k.a. ConstantArray) and declared GVs
     for (auto GVI = M->global_begin(); GVI != M->global_end();
          GVI++) {        // Iterate GVs for ClassList
         GlobalVariable &GV = *GVI;
-        Type* GVType=GV.getType ();
+        //Type* GVType=GV.getType ();
         StringRef GVName=GV.getName();
         if(GVName.startswith("OBJC_SELECTOR_REFERENCES_")){
             Constant* cs=GV.getInitializer();
             if(ConstantExpr* exp=dyn_cast<ConstantExpr>(cs)){
                 if(GlobalVariable* foo1= dyn_cast<GlobalVariable>(exp->getOperand (0))){
                     StringRef SELName=dyn_cast<ConstantDataArray>(foo1->getInitializer())->getAsCString();
-                    void* SELFoo=(void*)sel_registerName(SELName.data());
-                    errs()<<SELName<<" :"<<SELFoo<<"\n";
-                    EE->addGlobalMapping(&GV,&SELFoo);
+                    SEL SELFoo=sel_registerName(SELName.data());
+                    //errs()<<GVName<<" :"<<SELFoo<<"\n";
+#warning Memory Leak
+                    void* ptr=malloc(sizeof(SEL));
+                    memcpy(ptr, &SELFoo, sizeof(SEL));
+                    EE->addGlobalMapping(&GV,(void*)ptr);
                 }
             }
 
@@ -175,16 +178,11 @@ void LLHP::LoadModule(unique_ptr< Module > Mo){
                 size_t pos=GVName.find("OBJC_CLASS_$_");
                 StringRef clsName=GVName.substr(pos+strlen("OBJC_CLASS_$_"));
                 void* tmp=(__bridge void*)objc_getClass(clsName.data());
-                errs()<<clsName<<" :"<<tmp<<"\n";
+                //errs()<<GVName<<" :"<<tmp<<"\n";
                 EE->addGlobalMapping(&GV,tmp);
 
             }
-            /*map<Type*,function<void *(GlobalVariable*)>>::iterator it = Handlers.find(GVType);
-            if(it != Handlers.end())
-            {
-                function<void *(GlobalVariable*)> Handler = it->second;
 
-            }*/
 
         }
     }
